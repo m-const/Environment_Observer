@@ -7,9 +7,9 @@ router.get("/:tool", (req, res) => {
 
   const toolRes = ssh(
     "192.168.0.126",
-    "constm4",
-    "constm4",
-    "docker ls",
+    "user",
+    "pass",
+    "sudo -l",
     (output) => {
       console.log(output);
       if (output.code != 0) {
