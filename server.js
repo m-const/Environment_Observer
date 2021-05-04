@@ -2,28 +2,24 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const path = require("path");
-
 //Connect to DB
-const mongoose = require("mongoose");
-const db = process.env.MONGOURI;
+const mongo = require("./utils/mongo");
 
-mongoose
-  .connect(db, {
-    useUnifiedTopology: true,
-    useNewUrlParser: true,
-    useFindAndModify: false,
-  })
-  .then(() => console.log("MongoDB Connected..."))
-  .catch((err) => {
-    console.log(err);
-  });
+
+
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//ROUTES
+//Protected ROUTES
+//TODO: add AUTH
 app.use("/tool", require("./routes/tools/index"));
-app.use("/healthcheck", require("./routes/healthcheck"));
+
+//Unprotected routes
+app.use("/api/host", require("./routes/api/hosts"));
+app.use("/healthcheck", require("./routes/api/healthcheck"));
 
 //add the index page static route
 app.use(express.static(path.join(__dirname, "svelte", "public")));
