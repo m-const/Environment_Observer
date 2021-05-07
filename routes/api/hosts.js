@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
-
+require('mongoose');
+const Host = require('../../models/hosts');
 /**
  * @openapi
  * /api/host/list:
@@ -16,14 +16,10 @@ const mongoose = require('mongoose');
  */
 
 router.get('/list', (req, res) => {
-	const mongoStatus =
-		mongoose.connection.readyState === 1 ? 'Connected' : 'Unavailable';
-	const responseObject = {
-		'Application PORT:': process.env.PORT,
-		'Mongo DB Status:': mongoStatus,
-	};
-	res.status(200).json(responseObject).end();
-	return;
+	Host.find().then((hosts) => {
+		res.status(200).json(hosts).end();
+		return;
+	});
 });
 
 /**
@@ -45,10 +41,73 @@ router.get('/list', (req, res) => {
  *           type: string
  */
 
-router.get('/:hostID', (req, res) => {
+router.get('/:hostname', (req, res) => {
+	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then((host) => {
+		res.status(200).json(host).end();
+		return;
+	});
+});
 
-	res.status(200).json(req.params.hostID).end();
+/**
+ * @openapi
+ * /add/host:
+ *   post:
+ *     description: Add a new host
+ *     tags:
+ *      - Hosts
+ *     responses:
+ *       '201':
+ *         description: JSON added host object
+ *     requestBody:
+ *         description: ID number of the host to be queried
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.post('/add', (req, res) => {
+	//TODO: add validation and security middleware
+	const addNewHost = new Host({
+		hostname: req.body.hostname,
+		url: req.body.url,
+		description: req.body.description,
+		status: {
+			tool: req.body.tool,
+			cmd: req.body.cmd,
+			assert: req.body.assert,
+		},
+	});
+
+	addNewHost.save().catch((err) => console.log(err));
+
+	res.status(201).json(addNewHost).end();
 	return;
+});
+
+/**
+ * @openapi
+ * /add/host/delete:
+ *   delete:
+ *     description: Delete a host
+ *     tags:
+ *      - Hosts
+ *     responses:
+ *       '200':
+ *         description: JSON added host object
+ *     requestBody:
+ *         description: ID number of the host to be queried
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+ router.delete('/delete/:hostname', (req, res) => {
+	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then((host) => {
+		/* eslint-disable */
+		//TODO: clean this up and add validation
+		const code = (host.deletedCount === 1)? {status:200, msg: `Host Record Deleted for: ${req.params.hostname}`}:{status:400, msg: `No Records to delete`};
+		/* eslint-enable */
+		res.status(code.status).json(code).end();
+		return;
+	});
 });
 
 module.exports = router;
