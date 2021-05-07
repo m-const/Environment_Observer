@@ -1,15 +1,15 @@
-require("dotenv").config();
-const express = require("express");
+require('dotenv').config();
+const express = require('express');
 const router = express.Router();
 
-router.get("/:tool", (req, res) => {
-  const ssh = require("./tool.ssh");
+router.get('/:tool', (req, res) => {
+  const ssh = require('./tool.ssh');
 
-  const toolRes = ssh(
+  ssh(
     process.env.TEST_SSH_HOST,
     process.env.TEST_SSH_USER,
     process.env.TEST_SSH_PASS,
-    "pwd",
+    'pwd',
     (output) => {
       console.log(output);
       if (output.status === false) {

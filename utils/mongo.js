@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const db = process.env.MONGO_URI;
 const dbOptions = {
   useNewUrlParser: true,
@@ -11,10 +11,12 @@ const dbOptions = {
 mongoose
   .connect(db, dbOptions)
   .then((x) => {
-    console.log(`MongoDB Connection established to DB: ${x.connections[0].name} on HOST: ${x.connections[0].host} PORT: ${x.connections[0].port}`);
+    console.log(
+      `MongoDB Connection established to DB: ${x.connections[0].name} on HOST: ${x.connections[0].host} PORT: ${x.connections[0].port}`
+    );
   })
   .catch((err) => {
     console.log(err);
   });
 
-  module.exports = mongoose;
+module.exports = mongoose;

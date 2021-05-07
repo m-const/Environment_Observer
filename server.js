@@ -1,9 +1,9 @@
-require("dotenv").config();
-const express = require("express");
+require('dotenv').config();
+const express = require('express');
 const app = express();
-const path = require("path");
+const path = require('path');
 //Connect to DB
-const mongo = require("./utils/mongo");
+require('./utils/mongo');
 
 
 
@@ -15,16 +15,16 @@ app.use(express.urlencoded({ extended: true }));
 
 //Protected ROUTES
 //TODO: add AUTH
-app.use("/tool", require("./routes/tools/index"));
+app.use('/tool', require('./routes/tools/index'));
 
 //Unprotected routes
-app.use("/api/host", require("./routes/api/hosts"));
-app.use("/healthcheck", require("./routes/api/healthcheck"));
-
+app.use('/api/host', require('./routes/api/hosts'));
+app.use('/healthcheck', require('./routes/api/healthcheck'));
+app.use('/api-spec', require('./routes/api/swagger'));
 //add the index page static route
-app.use(express.static(path.join(__dirname, "svelte", "public")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "svelte", "public", "index.html"));
+app.use(express.static(path.join(__dirname, 'svelte', 'public')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'svelte', 'public', 'index.html'));
 });
 //Start the server
 const serverPort = process.env.PORT || 5000;

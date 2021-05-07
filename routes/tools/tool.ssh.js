@@ -1,18 +1,18 @@
-require("dotenv").config();
-const simpleSSH = require("simple-ssh");
+require('dotenv').config();
+const simpleSSH = require('simple-ssh');
 //https://www.npmjs.com/package/simple-ssh
 
 //Send an SSH command using simple SSH, respose is handled with a callback
 function ssh(host, user, password, cmd, callback) {
-  ssh_options = new simpleSSH({
+  const ssh_options = new simpleSSH({
     host: host,
     user: user,
     pass: password,
     timeout: process.env.SSH_TIMEOUT,
   });
   //if the command starts with sudo enable pseudo-tty
-  let cmdString = cmd.toLowerCase().split(" ");
-  let isPseudoTTY = cmdString[0] === "sudo";
+  let cmdString = cmd.toLowerCase().split(' ');
+  let isPseudoTTY = cmdString[0] === 'sudo';
   //create empt response object - this is used to gather output and returned
   let output = {};
   ssh_options
