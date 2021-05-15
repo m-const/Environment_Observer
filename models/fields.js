@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-const hostSchema = new mongoose.Schema(
+const fieldsSchema = new mongoose.Schema(
 	{
-		hostname: {
+		hostId: {
 			type: String,
 			required: true,
 		},
@@ -13,12 +13,14 @@ const hostSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
-		tools: [
+		status: [
 			{
-				
-
-				description: {
+                _id: {
 					type: String,
+					required: true,
+				},
+                description: {
+					type: mongoose.ObjectID,
 					required: true,
 				},
 				tool: {
@@ -31,18 +33,7 @@ const hostSchema = new mongoose.Schema(
 				},
 				assert: {
 					type: String,
-				},
-			},
-		],
-		fields: [
-			{
-				
-				key: {
-					type: String,
 					required: true,
-				},
-				value: {
-					type: String,
 				},
 			},
 		],
@@ -50,6 +41,6 @@ const hostSchema = new mongoose.Schema(
 	{ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
 );
 
-const Hosts = mongoose.model('Hosts', hostSchema);
+const Fields = mongoose.model('Fields', fieldsSchema);
 
-module.exports = Hosts;
+module.exports = Fields;

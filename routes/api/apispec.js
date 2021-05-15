@@ -14,7 +14,7 @@ const swaggerOptions = {
 			version: process.env.APP_VERSION,
 		},
 	},
-	apis: ['./routes/api/*.js', 'server.js'],
+	apis: ['./routes/api/*.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);

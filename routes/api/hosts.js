@@ -3,6 +3,50 @@ const express = require('express');
 const router = express.Router();
 require('mongoose');
 const Host = require('../../models/hosts');
+const { ensureAuthenticated } = require('../../utils/auth');
+
+
+/**
+* @openapi
+* components:
+*  schemas:
+*    Hosts:
+*      type: object 
+*      properties:
+*        hostname:
+*          type: string
+*        url:
+*          type: string
+*        description:
+*          type: string
+*        tools: 
+*          type: array
+*          items:
+*            type: object
+*            properties:
+*              description:
+*                type: string
+*              tool:
+*                type: string
+*              cmd:
+*                type: string
+*                example: sudo lsof -i -P -n |grep jenkins-agent
+*              assert:
+*                type: string
+*                example: /^(sshd).*(\(ESTABLISHED\))$/g
+*        fields: 
+*          type: array
+*          items:
+*            type: object
+*            properties:
+*              key:
+*                type: string
+*              value:
+*                type: string
+*/
+
+
+
 /**
  * @openapi
  * /api/host/list:
@@ -61,21 +105,47 @@ router.get('/:hostname', (req, res) => {
  *     requestBody:
  *         description: ID number of the host to be queried
  *         required: true
- *         schema:
- *           type: string
- */
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hosts'
+*/
+
+ 
+
 router.post('/add', (req, res) => {
-	//TODO: add validation and security middleware
-	const addNewHost = new Host({
+	//TODO: add validation
+	//TODO: add security middleware
+
+	//add all tools:
+	let toolsArr = [];
+	for (let i = 0; i < req.body.tools.length; i++) {
+		toolsArr[i] = {
+			description: req.body.tools[i].description,
+			tool: req.body.tools[i].tool,
+			cmd: req.body.tools[i].cmd,
+			assert: req.body.tools[i].assert,
+		};
+	}
+
+	//add all fields:
+	let fieldsArr = [];
+	for (let i = 0; i < req.body.fields.length; i++) {
+		fieldsArr[i] = {
+			key: req.body.fields[i].key,
+			value: req.body.fields[i].value,
+		};
+	}
+
+	const hostObject = {
 		hostname: req.body.hostname,
 		url: req.body.url,
 		description: req.body.description,
-		status: {
-			tool: req.body.tool,
-			cmd: req.body.cmd,
-			assert: req.body.assert,
-		},
-	});
+		tools: toolsArr,
+		fields: fieldsArr
+	};
+
+	const addNewHost = new Host(hostObject);
 
 	addNewHost.save().catch((err) => console.log(err));
 
@@ -99,15 +169,24 @@ router.post('/add', (req, res) => {
  *         schema:
  *           type: string
  */
- router.delete('/delete/:hostname', (req, res) => {
-	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then((host) => {
-		/* eslint-disable */
-		//TODO: clean this up and add validation
-		const code = (host.deletedCount === 1)? {status:200, msg: `Host Record Deleted for: ${req.params.hostname}`}:{status:400, msg: `No Records to delete`};
-		/* eslint-enable */
-		res.status(code.status).json(code).end();
-		return;
-	});
+router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
+	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
+		(host) => {
+			/* eslint-disable */
+			//TODO: clean this up and add validation
+			const code =
+				host.deletedCount === 1
+					? {
+							status: 200,
+							msg: `Host Record Deleted for: ${req.params.hostname}`,
+					  }
+					: { status: 400, msg: `No Records to delete` };
+			/* eslint-enable */
+
+			res.status(code.status).json(code).end();
+			return;
+		}
+	);
 });
 
 module.exports = router;
