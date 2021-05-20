@@ -5,47 +5,44 @@ require('mongoose');
 const Host = require('../../models/hosts');
 const { ensureAuthenticated } = require('../../utils/auth');
 
-
 /**
-* @openapi
-* components:
-*  schemas:
-*    Hosts:
-*      type: object 
-*      properties:
-*        hostname:
-*          type: string
-*        url:
-*          type: string
-*        description:
-*          type: string
-*        tools: 
-*          type: array
-*          items:
-*            type: object
-*            properties:
-*              description:
-*                type: string
-*              tool:
-*                type: string
-*              cmd:
-*                type: string
-*                example: sudo lsof -i -P -n |grep jenkins-agent
-*              assert:
-*                type: string
-*                example: /^(sshd).*(\(ESTABLISHED\))$/g
-*        fields: 
-*          type: array
-*          items:
-*            type: object
-*            properties:
-*              key:
-*                type: string
-*              value:
-*                type: string
-*/
-
-
+ * @openapi
+ * components:
+ *  schemas:
+ *    Hosts:
+ *      type: object
+ *      properties:
+ *        hostname:
+ *          type: string
+ *        url:
+ *          type: string
+ *        description:
+ *          type: string
+ *        tools:
+ *          type: array
+ *          items:
+ *            type: object
+ *            properties:
+ *              description:
+ *                type: string
+ *              tool:
+ *                type: string
+ *              cmd:
+ *                type: string
+ *                example: sudo lsof -i -P -n |grep jenkins-agent
+ *              assert:
+ *                type: string
+ *                example: /^(sshd).*(\(ESTABLISHED\))$/g
+ *        fields:
+ *          type: array
+ *          items:
+ *            type: object
+ *            properties:
+ *              key:
+ *                type: string
+ *              value:
+ *                type: string
+ */
 
 /**
  * @openapi
@@ -92,11 +89,20 @@ router.get('/:hostname', (req, res) => {
 	});
 });
 
+//TODO: update schema for json body or yaml file host add
 /**
  * @openapi
  * /add/host:
  *   post:
  *     description: Add a new host
+ *     summary: Adds a new host to via yaml file or embedded json
+ *     parameters:
+ *       - in: header
+ *         name: Input-Method
+ *         description: embedded or file
+ *         schema:
+ *           type: string
+ *         required: true
  *     tags:
  *      - Hosts
  *     responses:
@@ -109,48 +115,147 @@ router.get('/:hostname', (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Hosts'
-*/
-
- 
+ */
 
 router.post('/add', (req, res) => {
 	//TODO: add validation
 	//TODO: add security middleware
-
-	//add all tools:
-	let toolsArr = [];
-	for (let i = 0; i < req.body.tools.length; i++) {
-		toolsArr[i] = {
-			description: req.body.tools[i].description,
-			tool: req.body.tools[i].tool,
-			cmd: req.body.tools[i].cmd,
-			assert: req.body.tools[i].assert,
-		};
+	let inputMethodHeader = req.header('input-method');
+	if (typeof inputMethodHeader === 'undefined') {
+		res.status(400).json({ error: 'Invalid input method.' }).end();
+		return;
 	}
+	inputMethodHeader.toLowerCase();
+	if (inputMethodHeader === 'embedded') {
+		//add all tools:
+		let toolsArr = [];
+		for (let i = 0; i < req.body.tools.length; i++) {
+			toolsArr[i] = {
+				description: req.body.tools[i].description,
+				tool: req.body.tools[i].tool,
+				cmd: req.body.tools[i].cmd,
+				assert: req.body.tools[i].assert,
+			};
+		}
 
-	//add all fields:
-	let fieldsArr = [];
-	for (let i = 0; i < req.body.fields.length; i++) {
-		fieldsArr[i] = {
-			key: req.body.fields[i].key,
-			value: req.body.fields[i].value,
+		//add all fields:
+		let fieldsArr = [];
+		for (let i = 0; i < req.body.fields.length; i++) {
+			fieldsArr[i] = {
+				key: req.body.fields[i].key,
+				value: req.body.fields[i].value,
+			};
+		}
+
+		const hostObject = {
+			hostname: req.body.hostname,
+			url: req.body.url,
+			description: req.body.description,
+			tools: toolsArr,
+			fields: fieldsArr,
 		};
+		const addNewHost = new Host(hostObject);
+		addNewHost.save().catch((err) => console.log(err));
+		res.status(201).json(addNewHost).end();
+		return;
+	} else if (inputMethodHeader === 'file') {
+		const yaml = require('js-yaml');
+		const fs = require('fs');
+
+		let fileError = undefined;
+
+		if (!req.files || Object.keys(req.files).length === 0) {
+			return res.status(400).json({ Error: 'No File Uploaded' }).end();
+		}
+		let inputFile = req.files.input;
+		let uploadPath = './tmp/' + inputFile.name;
+		//only allow single file upload
+		if (inputFile.length > 1 || typeof inputFile.length === undefined) {
+			return res.status(400).json({ Error: 'Too many files.' }).end();
+		}
+
+		//ensure file is yaml
+		if (inputFile.mimetype !== 'text/yaml') {
+			return res.status(400).json({ Error: 'Invalid file type.' }).end();
+		}
+		// Use the mv() method to place the file somewhere on your server
+		inputFile.mv(uploadPath, function (err) {
+			if (err) {
+				fileError = err;
+			} else {
+				// Get document, or throw exception on error
+				try {
+					const doc = yaml.load(fs.readFileSync(uploadPath));
+					const addNewHosts = [];
+					//loop through hosts
+					for (let x = 0; x < doc.hosts.length; x++) {
+						let currentHost = doc.hosts[x];
+						//add all tools:
+						let toolsArr = [];
+						for (let i = 0; i < currentHost.tools.length; i++) {
+							toolsArr[i] = {
+								description: currentHost.tools[i].description,
+								tool: currentHost.tools[i].tool,
+								cmd: currentHost.tools[i].cmd,
+								assert: currentHost.tools[i].assert,
+							};
+						}
+
+						//add all fields:
+						let fieldsArr = [];
+						for (let i = 0; i < currentHost.fields.length; i++) {
+							fieldsArr[i] = {
+								key: currentHost.fields[i].key,
+								value: currentHost.fields[i].value,
+							};
+						}
+
+						const hostObject = {
+							hostname: currentHost.hostname,
+							url: currentHost.url,
+							description: currentHost.description,
+							tools: toolsArr,
+							fields: fieldsArr,
+						};
+						addNewHosts[x] = new Host(hostObject);
+
+						currentHost = undefined;
+					}
+
+					//delete file when finished with it
+					fs.unlink(uploadPath, (err) => {
+						if (err) {
+							//log this error,
+							console.error(err);
+						}
+					});
+
+					//save to DB
+					Host.create(addNewHosts).then(
+						(val) => {
+							res.status(201).json({ 'Input-Method': 'file', data: val }).end();
+						},
+						(err) => {
+							res
+								.status(500)
+								.json({ 'Input-Method': 'file', error: err })
+								.end();
+						}
+					);
+
+					return;
+				} catch (err) {
+					fileError = err;
+				}
+			}
+			res.status(500).json({ Error: fileError }).end();
+		});
+
+		//res.status(201).json({ 'Input-Method': 'file' }).end();
+	} else {
+		res.status(400).json({ error: 'Invalid input method.' }).end();
+		return;
 	}
-
-	const hostObject = {
-		hostname: req.body.hostname,
-		url: req.body.url,
-		description: req.body.description,
-		tools: toolsArr,
-		fields: fieldsArr
-	};
-
-	const addNewHost = new Host(hostObject);
-
-	addNewHost.save().catch((err) => console.log(err));
-
-	res.status(201).json(addNewHost).end();
-	return;
 });
 
 /**

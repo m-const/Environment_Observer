@@ -2,8 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const path = require('path');
+const fileUpload = require('express-fileupload');
 //Connect to DB
 require('./utils/mongo');
+
+//Middleware
+app.use(fileUpload());
 
 //Auth 
 //TODO: set up

@@ -12,23 +12,20 @@ const swaggerOptions = {
 		info: {
 			title: process.env.APP_NAME,
 			version: process.env.APP_VERSION,
+			description:
+				'Environment documentation and monitoring platform for developers.',
 		},
+		servers: [
+			{
+				url: process.env.APP_URL + ':' + process.env.PORT,
+				description: 'Development Environment',
+			},
+		],
 	},
 	apis: ['./routes/api/*.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
-/**
- * @openapi
- * /healthcheck/api-docs:
- *   get:
- *     description: Swagger UI - API spec
- *     tags:
- *       - Healthcheck
- *     responses:
- *       '200':
- *         description: Swagger UI
- */
 router.use('/', swaggerUI.serve);
 router.get('/', swaggerUI.setup(swaggerDocs));
 
