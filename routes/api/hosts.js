@@ -89,6 +89,7 @@ router.get('/:hostname', (req, res) => {
 	});
 });
 
+//TODO: update schema for json body or yaml file host add
 /**
  * @openapi
  * /add/host:
@@ -158,8 +159,99 @@ router.post('/add', (req, res) => {
 		res.status(201).json(addNewHost).end();
 		return;
 	} else if (inputMethodHeader === 'file') {
-		//TODO: add yaml file add method
-		res.status(201).json({ 'Input-Method': 'file' }).end();
+		const yaml = require('js-yaml');
+		const fs = require('fs');
+
+		let fileError = undefined;
+
+		if (!req.files || Object.keys(req.files).length === 0) {
+			return res.status(400).json({ Error: 'No File Uploaded' }).end();
+		}
+		let inputFile = req.files.input;
+		let uploadPath = './tmp/' + inputFile.name;
+		//only allow single file upload
+		if (inputFile.length > 1 || typeof inputFile.length === undefined) {
+			return res.status(400).json({ Error: 'Too many files.' }).end();
+		}
+
+		//ensure file is yaml
+		if (inputFile.mimetype !== 'text/yaml') {
+			return res.status(400).json({ Error: 'Invalid file type.' }).end();
+		}
+		// Use the mv() method to place the file somewhere on your server
+		inputFile.mv(uploadPath, function (err) {
+			if (err) {
+				fileError = err;
+			} else {
+				// Get document, or throw exception on error
+				try {
+					const doc = yaml.load(fs.readFileSync(uploadPath));
+					const addNewHosts = [];
+					//loop through hosts
+					for (let x = 0; x < doc.hosts.length; x++) {
+						let currentHost = doc.hosts[x];
+						//add all tools:
+						let toolsArr = [];
+						for (let i = 0; i < currentHost.tools.length; i++) {
+							toolsArr[i] = {
+								description: currentHost.tools[i].description,
+								tool: currentHost.tools[i].tool,
+								cmd: currentHost.tools[i].cmd,
+								assert: currentHost.tools[i].assert,
+							};
+						}
+
+						//add all fields:
+						let fieldsArr = [];
+						for (let i = 0; i < currentHost.fields.length; i++) {
+							fieldsArr[i] = {
+								key: currentHost.fields[i].key,
+								value: currentHost.fields[i].value,
+							};
+						}
+
+						const hostObject = {
+							hostname: currentHost.hostname,
+							url: currentHost.url,
+							description: currentHost.description,
+							tools: toolsArr,
+							fields: fieldsArr,
+						};
+						addNewHosts[x] = new Host(hostObject);
+
+						currentHost = undefined;
+					}
+
+					//delete file when finished with it
+					fs.unlink(uploadPath, (err) => {
+						if (err) {
+							//log this error,
+							console.error(err);
+						}
+					});
+
+					//save to DB
+					Host.create(addNewHosts).then(
+						(val) => {
+							res.status(201).json({ 'Input-Method': 'file', data: val }).end();
+						},
+						(err) => {
+							res
+								.status(500)
+								.json({ 'Input-Method': 'file', error: err })
+								.end();
+						}
+					);
+
+					return;
+				} catch (err) {
+					fileError = err;
+				}
+			}
+			res.status(500).json({ Error: fileError }).end();
+		});
+
+		//res.status(201).json({ 'Input-Method': 'file' }).end();
 	} else {
 		res.status(400).json({ error: 'Invalid input method.' }).end();
 		return;
