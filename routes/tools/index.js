@@ -11,7 +11,7 @@ router.get('/:tool', (req, res) => {
     process.env.TEST_SSH_PASS,
     'pwd',
     (output) => {
-      console.log(output);
+      ///console.log(output);
       if (output.status === false) {
         //There was an SSH error
         return res

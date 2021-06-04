@@ -4,6 +4,7 @@ const router = express.Router();
 require('mongoose');
 const Host = require('../../models/hosts');
 const { ensureAuthenticated } = require('../../utils/auth');
+const cryptoUtils = require('../../utils/encrypt');
 
 /**
  * @openapi
@@ -42,8 +43,9 @@ const { ensureAuthenticated } = require('../../utils/auth');
  *                type: string
  *              value:
  *                type: string
+ *              encrypted:
+ *                type: boolean
  */
-
 /**
  * @openapi
  * /api/host/list:
@@ -117,7 +119,7 @@ router.get('/:hostname', (req, res) => {
  *               $ref: '#/components/schemas/Hosts'
  */
 
-router.post('/add', (req, res) => {
+router.post('/add', ensureAuthenticated, (req, res) => {
 	//TODO: add validation
 	//TODO: add security middleware
 	let inputMethodHeader = req.header('input-method');
@@ -141,10 +143,26 @@ router.post('/add', (req, res) => {
 		//add all fields:
 		let fieldsArr = [];
 		for (let i = 0; i < req.body.fields.length; i++) {
-			fieldsArr[i] = {
-				key: req.body.fields[i].key,
-				value: req.body.fields[i].value,
-			};
+			let fieldValuePlaintext = req.body.fields[i].value;
+			if (req.body.fields[i].encrypted === true) {
+				let key = cryptoUtils.getRandomKey();
+				fieldValuePlaintext = cryptoUtils
+					.encrypt(req.body.fields[i].value, key)
+					.toString('base64');
+
+				fieldsArr[i] = {
+					key: req.body.fields[i].key,
+					value: fieldValuePlaintext,
+					encrypted: req.body.fields[i].encrypted,
+					encryptionKey: key.toString('base64'),
+				};
+		
+			} else {
+				fieldsArr[i] = {
+					key: req.body.fields[i].key,
+					value: fieldValuePlaintext,
+				};
+			}
 		}
 
 		const hostObject = {
@@ -204,10 +222,26 @@ router.post('/add', (req, res) => {
 						//add all fields:
 						let fieldsArr = [];
 						for (let i = 0; i < currentHost.fields.length; i++) {
-							fieldsArr[i] = {
-								key: currentHost.fields[i].key,
-								value: currentHost.fields[i].value,
-							};
+							let fieldValuePlaintext = req.body.fields[i].value;
+							if (req.body.fields[i].encrypted === true) {
+								let key = cryptoUtils.getRandomKey();
+								fieldValuePlaintext = cryptoUtils.encrypt(
+									req.body.fields[i].value,
+									key
+								);
+
+								fieldsArr[i] = {
+									key: req.body.fields[i].key,
+									value: fieldValuePlaintext.toString('base64'),
+									encrypted: req.body.fields[i].encrypted,
+									encryptionKey: key.toString('base64'),
+								};
+							} else {
+								fieldsArr[i] = {
+									key: req.body.fields[i].key,
+									value: fieldValuePlaintext,
+								};
+							}
 						}
 
 						const hostObject = {
@@ -260,8 +294,41 @@ router.post('/add', (req, res) => {
 
 /**
  * @openapi
- * /add/host/delete:
+ * /delete:
  *   delete:
+ *     description: Delete a host
+ *     tags:
+ *      - Hosts
+ *     responses:
+ *       '200':
+ *         description: JSON added host object
+ *       '400':
+ *         description: Returned when there is no matching record to delete
+ */
+router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
+	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
+		(host) => {
+			/* eslint-disable */
+			//TODO: clean this up and add validation
+			const code =
+				host.deletedCount === 1
+					? {
+							status: 200,
+							msg: `Host Record Deleted for: ${req.params.hostname}`,
+					  }
+					: { status: 400, msg: `No Records to delete` };
+			/* eslint-enable */
+
+			res.status(code.status).json(code).end();
+			return;
+		}
+	);
+});
+
+/**
+ * @openapi
+ * /update/host:
+ *   update:
  *     description: Delete a host
  *     tags:
  *      - Hosts
@@ -274,7 +341,7 @@ router.post('/add', (req, res) => {
  *         schema:
  *           type: string
  */
-router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
+router.delete('/update/host/:hostname', ensureAuthenticated, (req, res) => {
 	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
 		(host) => {
 			/* eslint-disable */
@@ -283,7 +350,7 @@ router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
 				host.deletedCount === 1
 					? {
 							status: 200,
-							msg: `Host Record Deleted for: ${req.params.hostname}`,
+							msg: `Host Record Updated for: ${req.params.hostname}`,
 					  }
 					: { status: 400, msg: `No Records to delete` };
 			/* eslint-enable */

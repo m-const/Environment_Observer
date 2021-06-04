@@ -44,6 +44,13 @@ const hostSchema = new mongoose.Schema(
 				value: {
 					type: String,
 				},
+				encrypted: {
+					default: false,
+					type: Boolean
+				},
+				encryptionKey:{
+					type: String
+				}
 			},
 		],
 	},

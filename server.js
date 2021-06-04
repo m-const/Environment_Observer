@@ -3,14 +3,17 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const fileUpload = require('express-fileupload');
+const https = require('https');
+const fs = require('fs');
+
 //Connect to DB
 require('./utils/mongo');
 
 //Middleware
 app.use(fileUpload());
 
-//Auth 
-//TODO: set up
+//Auth
+//TODO: set up auth
 /* passport.use(new OAuth2Strategy({
   authorizationURL: 'https://www.example.com/oauth2/authorize',
   tokenURL: 'https://www.example.com/oauth2/token',
@@ -24,8 +27,6 @@ function(accessToken, refreshToken, profile, cb) {
   });
 }
 )); */
-
-
 
 //Routes
 app.use(express.json());
@@ -43,4 +44,12 @@ app.use(express.static(path.join(__dirname, 'svelte', 'public')));
 
 //Start the server
 const serverPort = process.env.PORT || 5000;
-app.listen(serverPort, console.log(`Server Started on PORT: ${serverPort}`));
+
+const serverOptions = {
+	key: fs.readFileSync(path.join(__dirname, 'bin', process.env.CERTIFICATE_KEY), 'utf8'),
+	cert: fs.readFileSync(path.join(__dirname, 'bin', process.env.CERTIFICATE), 'utf8'),
+  passphrase: process.env.CERTIFICATE_PASSPHRASE
+};
+https
+	.createServer(serverOptions, app)
+	.listen(serverPort, console.log(`Server Started on PORT: ${serverPort}`));
