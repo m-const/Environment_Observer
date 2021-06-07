@@ -85,13 +85,13 @@ router.get('/list', (req, res) => {
  */
 
 router.get('/:hostname', (req, res) => {
-	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then((hosts) => {
-		res.status(200).json(hostUtils.sanitize(hosts)).end();
-		return;
-	});
+	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then(
+		(hosts) => {
+			res.status(200).json(hostUtils.sanitize(hosts)).end();
+			return;
+		}
+	);
 });
-
-
 
 //TODO: update schema for json body or yaml file host add
 /**
@@ -158,7 +158,6 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 					encrypted: req.body.fields[i].encrypted,
 					encryptionKey: key.toString('base64'),
 				};
-		
 			} else {
 				fieldsArr[i] = {
 					key: req.body.fields[i].key,
@@ -343,10 +342,8 @@ router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
  *         schema:
  *           type: string
  */
- /* router.delete('/update/host/:hostname', ensureAuthenticated, (req, res) => {
-
-});  */
-
-
+router.post('/update/:hostname', ensureAuthenticated, (req, res) => {
+	res.status(200).json({ msg: 'success:' + req.params.hostname }).end();
+});
 
 module.exports = router;
