@@ -33,6 +33,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/tool', require('./routes/tools/index'));
 app.use('/api/host', require('./routes/api/hosts'));
+app.use('/api/fields', require('./routes/api/fields'));
 app.use('/healthcheck', require('./routes/api/healthcheck'));
 app.use('/api-spec', require('./routes/api/apispec'));
 

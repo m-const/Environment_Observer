@@ -5,7 +5,7 @@ require('mongoose');
 const Host = require('../../models/hosts');
 const { ensureAuthenticated } = require('../../utils/auth');
 const cryptoUtils = require('../../utils/encrypt');
-
+const hostUtils = require('../../utils/hostUtils');
 /**
  * @openapi
  * components:
@@ -57,10 +57,10 @@ const cryptoUtils = require('../../utils/encrypt');
  *       200:
  *         description: Returns JSON of each observed HOST
  */
-
+//TODO: filter returned host fields to not return encrypted info / key, jsut return Key name.
 router.get('/list', (req, res) => {
 	Host.find().then((hosts) => {
-		res.status(200).json(hosts).end();
+		res.status(200).json(hostUtils.sanitize(hosts)).end();
 		return;
 	});
 });
@@ -85,11 +85,13 @@ router.get('/list', (req, res) => {
  */
 
 router.get('/:hostname', (req, res) => {
-	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then((host) => {
-		res.status(200).json(host).end();
+	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then((hosts) => {
+		res.status(200).json(hostUtils.sanitize(hosts)).end();
 		return;
 	});
 });
+
+
 
 //TODO: update schema for json body or yaml file host add
 /**
@@ -341,24 +343,10 @@ router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
  *         schema:
  *           type: string
  */
-router.delete('/update/host/:hostname', ensureAuthenticated, (req, res) => {
-	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
-		(host) => {
-			/* eslint-disable */
-			//TODO: clean this up and add validation
-			const code =
-				host.deletedCount === 1
-					? {
-							status: 200,
-							msg: `Host Record Updated for: ${req.params.hostname}`,
-					  }
-					: { status: 400, msg: `No Records to delete` };
-			/* eslint-enable */
+ /* router.delete('/update/host/:hostname', ensureAuthenticated, (req, res) => {
 
-			res.status(code.status).json(code).end();
-			return;
-		}
-	);
-});
+});  */
+
+
 
 module.exports = router;
