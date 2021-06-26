@@ -306,16 +306,17 @@ router.post('/add', ensureAuthenticated, (req, res) => {
  *       '400':
  *         description: Returned when there is no matching record to delete
  */
-router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
-	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
+router.delete('/delete/:id', ensureAuthenticated, (req, res) => {
+	Host.deleteOne({ _id: req.params.id }).then(
 		(host) => {
 			/* eslint-disable */
 			//TODO: clean this up and add validation
 			const code =
 				host.deletedCount === 1
+				console.log(host)
 					? {
 							status: 200,
-							msg: `Host Record Deleted for: ${req.params.hostname}`,
+							msg: `Host Record Deleted for: ${req.params.id}`,
 					  }
 					: { status: 400, msg: `No Records to delete` };
 			/* eslint-enable */

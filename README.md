@@ -6,3 +6,6 @@ Environment documentation and monitoring platform for developers.
 - API for CICD integration - automate environment documentation
 - Bulk operations through YAML
 - Manage secrets
+
+API Spec Endpoint
+/api-spec
