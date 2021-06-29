@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const db = process.env.MONGO_URI;
 const dbOptions = {
   useNewUrlParser: true,
+  useFindAndModify:false,
   useUnifiedTopology: true,
   user: process.env.MONGO_USER,
   pass: process.env.MONGO_PASS,

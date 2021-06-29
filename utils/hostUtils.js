@@ -53,6 +53,7 @@ function sanitizeHostObject(host) {
 	const returnHost = {
 		_id: host._id,
 		hostname: host.hostname,
+		url:host.url,
 		description: host.description,
 		tools: [sanitizedTools],
 		fields: [sanitizedFields],

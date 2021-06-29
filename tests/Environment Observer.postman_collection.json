@@ -156,6 +156,35 @@
 			"response": []
 		},
 		{
+			"name": "Patch Host",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"description\":\"MongoDb running on docker\",\n    \"url\":\"localhost:27017\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/host/update/60da7c0abd66851da9c334c7",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"update",
+						"60da7c0abd66851da9c334c7"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Delete Host",
 			"request": {
 				"method": "DELETE",
@@ -170,6 +199,37 @@
 						"host",
 						"delete",
 						"60da7bd8b815d71d78314705"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Patch Host - Tool",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"key\":\"port\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/host/update/60da7c0abd66851da9c334c7/fields/60da7c0abd66851da9c334c9",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"update",
+						"60da7c0abd66851da9c334c7",
+						"fields",
+						"60da7c0abd66851da9c334c9"
 					]
 				}
 			},
