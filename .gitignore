@@ -106,6 +106,6 @@ dist
 #Documentation / Notes
 *.drawio
 /tmp
-/tests
 /bin
 lint.html
+development_notes.md

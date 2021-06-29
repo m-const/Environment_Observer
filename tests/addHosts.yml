@@ -1,0 +1,56 @@
+---
+hosts:
+- hostname: TEST
+  url: string
+  description: Mongo DB on localhost docker
+  tools:
+  - description: Verify Container is running
+    tool: ssh
+    cmd: docker ps -f name=mongo -q
+    assert: "^[\\w+-\\.]+$"
+  fields:
+  - key: port
+    value: '27017'
+    encrypted: false
+  - key: user
+    value: admin
+    encrypted: false
+  - key: pass
+    value: admin
+    encrypted: true
+- hostname: TEST 2
+  url: string
+  description: Mongo DB on localhost docker
+  tools:
+  - description: Verify Container is running
+    tool: ssh
+    cmd: docker ps -f name=mongo -q
+    assert: "^[\\w+-\\.]+$"
+  fields:
+  - key: port
+    value: '27017'
+    encrypted: false
+  - key: user
+    value: admin
+    encrypted: false
+  - key: pass
+    value: admin
+    encrypted: true
+- hostname: TEST 3
+  url: string
+  description: Mongo DB on localhost docker
+  tools:
+  - description: Verify Container is running
+    tool: ssh
+    cmd: docker ps -f name=mongo -q
+    assert: "^[\\w+-\\.]+$"
+  fields:
+  - key: port
+    value: '27017'
+    encrypted: false
+  - key: user
+    value: admin
+    encrypted: false
+  - key: pass
+    value: admin
+    encrypted: true

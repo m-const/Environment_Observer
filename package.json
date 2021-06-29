@@ -13,7 +13,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -f html -o lint.html server.js utils/** routes/** models/**",
-    "dev": "nodemon server.js --exec \"npm run lint&& node\""
+    "start-dev-lint": "nodemon server.js --exec \"npm run lint&& node\"",
+    "start-dev": "nodemon server.js"
   },
   "repository": {
     "type": "git",

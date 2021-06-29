@@ -85,13 +85,13 @@ router.get('/list', (req, res) => {
  */
 
 router.get('/:hostname', (req, res) => {
-	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then((hosts) => {
-		res.status(200).json(hostUtils.sanitize(hosts)).end();
-		return;
-	});
+	Host.findOne({ hostname: req.params.hostname.toUpperCase() }).then(
+		(hosts) => {
+			res.status(200).json(hostUtils.sanitize(hosts)).end();
+			return;
+		}
+	);
 });
-
-
 
 //TODO: update schema for json body or yaml file host add
 /**
@@ -158,7 +158,6 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 					encrypted: req.body.fields[i].encrypted,
 					encryptionKey: key.toString('base64'),
 				};
-		
 			} else {
 				fieldsArr[i] = {
 					key: req.body.fields[i].key,
@@ -195,10 +194,10 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 		}
 
 		//ensure file is yaml
-		if (inputFile.mimetype !== 'text/yaml') {
+		if (inputFile.mimetype !== 'text/yaml' && inputFile.mimetype !== 'application/json') {
 			return res.status(400).json({ Error: 'Invalid file type.' }).end();
 		}
-		// Use the mv() method to place the file somewhere on your server
+		// Use the mv() method to place the file in tmp/
 		inputFile.mv(uploadPath, function (err) {
 			if (err) {
 				fileError = err;
@@ -224,23 +223,23 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 						//add all fields:
 						let fieldsArr = [];
 						for (let i = 0; i < currentHost.fields.length; i++) {
-							let fieldValuePlaintext = req.body.fields[i].value;
-							if (req.body.fields[i].encrypted === true) {
+							let fieldValuePlaintext = currentHost.fields[i].value;
+							if (currentHost.fields[i].encrypted === true) {
 								let key = cryptoUtils.getRandomKey();
 								fieldValuePlaintext = cryptoUtils.encrypt(
-									req.body.fields[i].value,
+									currentHost.fields[i].value,
 									key
 								);
 
 								fieldsArr[i] = {
-									key: req.body.fields[i].key,
+									key: currentHost.fields[i].key,
 									value: fieldValuePlaintext.toString('base64'),
-									encrypted: req.body.fields[i].encrypted,
+									encrypted: currentHost.fields[i].encrypted,
 									encryptionKey: key.toString('base64'),
 								};
 							} else {
 								fieldsArr[i] = {
-									key: req.body.fields[i].key,
+									key: currentHost.fields[i].key,
 									value: fieldValuePlaintext,
 								};
 							}
@@ -282,6 +281,7 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 					return;
 				} catch (err) {
 					fileError = err;
+					console.log(err)
 				}
 			}
 			res.status(500).json({ Error: fileError }).end();
@@ -307,8 +307,8 @@ router.post('/add', ensureAuthenticated, (req, res) => {
  *       '400':
  *         description: Returned when there is no matching record to delete
  */
-router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
-	Host.deleteOne({ hostname: req.params.hostname.toUpperCase() }).then(
+router.delete('/delete/:id', ensureAuthenticated, (req, res) => {
+	Host.deleteOne({ _id: req.params.id }).then(
 		(host) => {
 			/* eslint-disable */
 			//TODO: clean this up and add validation
@@ -316,7 +316,7 @@ router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
 				host.deletedCount === 1
 					? {
 							status: 200,
-							msg: `Host Record Deleted for: ${req.params.hostname}`,
+							msg: `Host Record Deleted for: ${req.params.id}`,
 					  }
 					: { status: 400, msg: `No Records to delete` };
 			/* eslint-enable */
@@ -343,10 +343,8 @@ router.delete('/delete/:hostname', ensureAuthenticated, (req, res) => {
  *         schema:
  *           type: string
  */
- /* router.delete('/update/host/:hostname', ensureAuthenticated, (req, res) => {
-
-});  */
-
-
+router.post('/update/:hostname', ensureAuthenticated, (req, res) => {
+	res.status(200).json({ msg: 'success:' + req.params.hostname }).end();
+});
 
 module.exports = router;
