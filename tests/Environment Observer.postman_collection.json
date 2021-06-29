@@ -1,0 +1,179 @@
+{
+	"info": {
+		"_postman_id": "4fe9f18e-fad2-42b5-9d77-eb71de87716a",
+		"name": "Environment Observer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/healthcheck",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"healthcheck"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Host - embedded  JSON",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "input-method",
+						"value": "embedded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"hostname\": \"MongoDB\",\n\t\"url\": \"string\",\n\t\"description\": \"Mongo DB on localhost docker\",\n\t\"tools\": [{\n\t\t\"description\": \"Verify Container is running\",\n\t\t\"tool\": \"ssh\",\n\t\t\"cmd\": \"docker ps -f name=mongo -q\",\n\t\t\"assert\": \"^[\\\\w+-\\\\.]+$\"\n\t}],\n\t\"fields\": [{\n\t\t\"key\": \"port\",\n\t\t\"value\": \"27017\",\n\t\t\"encrypted\": false\n\t},{\n\t\t\"key\": \"user\",\n\t\t\"value\": \"admin\",\n\t\t\"encrypted\": false\n\t},{\n\t\t\"key\": \"pass\",\n\t\t\"value\": \"admin\",\n\t\t\"encrypted\": true\n\t}]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/host/add",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Host - JSON File (single)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "input-method",
+						"value": "file",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "input",
+							"type": "file",
+							"src": "/home/constm4/development/tests/addSingleHost.json"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/host/add",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Host - YAML File (Multi)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "input-method",
+						"value": "file",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "input",
+							"type": "file",
+							"src": "/home/constm4/development/tests/addHosts.yml"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/host/add",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Hosts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/host/list",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Host",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/host/delete/60da7bd8b815d71d78314705",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"host",
+						"delete",
+						"60da7bd8b815d71d78314705"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

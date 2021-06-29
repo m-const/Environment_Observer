@@ -194,10 +194,10 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 		}
 
 		//ensure file is yaml
-		if (inputFile.mimetype !== 'text/yaml') {
+		if (inputFile.mimetype !== 'text/yaml' && inputFile.mimetype !== 'application/json') {
 			return res.status(400).json({ Error: 'Invalid file type.' }).end();
 		}
-		// Use the mv() method to place the file somewhere on your server
+		// Use the mv() method to place the file in tmp/
 		inputFile.mv(uploadPath, function (err) {
 			if (err) {
 				fileError = err;
@@ -223,23 +223,23 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 						//add all fields:
 						let fieldsArr = [];
 						for (let i = 0; i < currentHost.fields.length; i++) {
-							let fieldValuePlaintext = req.body.fields[i].value;
-							if (req.body.fields[i].encrypted === true) {
+							let fieldValuePlaintext = currentHost.fields[i].value;
+							if (currentHost.fields[i].encrypted === true) {
 								let key = cryptoUtils.getRandomKey();
 								fieldValuePlaintext = cryptoUtils.encrypt(
-									req.body.fields[i].value,
+									currentHost.fields[i].value,
 									key
 								);
 
 								fieldsArr[i] = {
-									key: req.body.fields[i].key,
+									key: currentHost.fields[i].key,
 									value: fieldValuePlaintext.toString('base64'),
-									encrypted: req.body.fields[i].encrypted,
+									encrypted: currentHost.fields[i].encrypted,
 									encryptionKey: key.toString('base64'),
 								};
 							} else {
 								fieldsArr[i] = {
-									key: req.body.fields[i].key,
+									key: currentHost.fields[i].key,
 									value: fieldValuePlaintext,
 								};
 							}
@@ -281,6 +281,7 @@ router.post('/add', ensureAuthenticated, (req, res) => {
 					return;
 				} catch (err) {
 					fileError = err;
+					console.log(err)
 				}
 			}
 			res.status(500).json({ Error: fileError }).end();
@@ -313,7 +314,6 @@ router.delete('/delete/:id', ensureAuthenticated, (req, res) => {
 			//TODO: clean this up and add validation
 			const code =
 				host.deletedCount === 1
-				console.log(host)
 					? {
 							status: 200,
 							msg: `Host Record Deleted for: ${req.params.id}`,
