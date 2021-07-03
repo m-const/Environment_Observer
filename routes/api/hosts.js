@@ -4,7 +4,7 @@ const Hosts = require("../../models/hosts");
 const router = express.Router();
 require("mongoose");
 const Host = require("../../models/hosts");
-const { ensureAuthenticated } = require("../../utils/auth");
+const { ensureAuthenticated, roleAuthorised } = require("../../utils/auth");
 const cryptoUtils = require("../../utils/encrypt");
 const hostUtils = require("../../utils/hostUtils");
 /**
@@ -332,56 +332,134 @@ router.delete("/delete/:id", ensureAuthenticated, (req, res) => {
 /**
  * @openapi
  * /update/host:
- *   update:
- *     description: Delete a host
+ *   patch:
+ *     description: Change the value of an existing host entry
+ *     summary: Change the value of an existing host entry
+ *     parameters:
+ *       - in: path
+ *         name: Host _id
+ *         description: the _id of the host to apply change to
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: path
+ *         name: Type
+ *         description: On of fields or tools
+ *         schema:
+ *           type: string
+ *           enum:
+ *            - fields
+ *            - tools
+ *       - in: path
+ *         name: Sub _id
+ *         description: the _id of the tool or field entry to apply change to
+ *         schema:
+ *           type: string
  *     tags:
  *      - Hosts
  *     responses:
  *       '200':
- *         description: JSON added host object
+ *         description: entries updated successfully
  *     requestBody:
- *         description: ID number of the host to be queried
+ *         description: Attributes to be updated in key value format.
  *         required: true
- *         schema:
- *           type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hosts'
  */
-router.patch("/update/:id/:type?/:subid?", ensureAuthenticated, (req, res) => {
-  //this method is used to update a specific attribute of the host
-  //URL param is the ID of the host to patch
-  //request body to provide the update(s) in key value formatted json
-  //this method should be used directly to update field and tool records
-  let update = {};
-  let filter = {};
-  if (
-    req.params.subid &&
-    ["fields", "tools"].includes(req.params.type.toLowerCase())
-  ) {
-    const type = req.params.type.toLowerCase();
-    for (const key in req.body) {
-      update[type + ".$." + key] = req.body[key];
-    }
 
-    filter["_id"] = req.params.id;
-    filter[type+"._id"] = req.params.subid;
-  } else {
-    filter = { _id: req.params.id };
-    for (const key in req.body) {
-      update[key] = req.body[key];
-    }
-  }
-  const dbRes = Host.findOneAndUpdate(filter, update, {
-    new: true,
-  }).then((data) => {
+router.patch(
+  "/update/:id/:type?/:subid?",
+  ensureAuthenticated,
+  roleAuthorised,
+  (req, res) => {
+    /* 
+    this method is used to update a specific attribute of the host
+    - Usage 1
+    To update direct host properties provide the host _id
+    - Usage 2
+    Request body to provide the update(s) in key value formatted json
+    this method should be used directly to update field and tool records
+    by providing host _id/[fields || tools]/field or tool _id
+
+    Handling of encrypted fields:
+    - We rely on the roleAuthorised middleware to handle redirect on insufficient 
+    permissions
+    - when an update to an encrypted field is requested we update the field using 
+    the encypt utility functions
+    - we cannot only update the requested value field, we expect the request to 
+    contain the value field and the encryption flag
     
-    if (data) {
-      res.status(200).json(data).end();
+    applicable fields
+    "encrypted": true,
+    "value": "content hidden",
+    "encryptionKey": "content hidden" 
+    */
+
+    let update = {};
+    let filter = {};
+    if (
+      req.params.subid &&
+      ["fields", "tools"].includes(req.params.type.toLowerCase())
+    ) {
+      const type = req.params.type.toLowerCase();
+
+      if (type == "fields" && req.body.encrypted.toLowerCase() === true) {
+        //ensure all required fields are in the request
+        if (req.body.encrypted && req.body.value && req.body.encryptionKey) {
+          let encryptionKey = cryptoUtils.getRandomKey();
+          let encryptedValue = cryptoUtils.encrypt(
+            req.body.value,
+            encryptionKey
+          );
+          update = {
+            "fields.$.encrypted": "true",
+            "fields.$.value": encryptedValue,
+            "fields.$.encryptionKey": encryptionKey,
+          };
+          if (req.body.key) {
+            update["fields.$.key"] = req.body.key;
+          }
+        } else {
+          //return 400 badrequest
+          res
+            .status(400)
+            .json({
+              error:
+                "Updates to encrypted fields must include these fields in the request: encrypted, value, encryptionKey",
+            })
+            .end();
+        }
+      }
+
+      for (const key in req.body) {
+        update[type + ".$." + key] = req.body[key];
+      }
+
+      filter["_id"] = req.params.id;
+      filter[type + "._id"] = req.params.subid;
     } else {
-      res.status(401).json(data).end();
+      filter = { _id: req.params.id };
+      for (const key in req.body) {
+        update[key] = req.body[key];
+      }
     }
-  },
-  (err)=>{
-    console.log(err)
-  });
-});
+    const dbRes = Host.findOneAndUpdate(filter, update, {
+      new: true,
+    }).then(
+      (data) => {
+        if (data) {
+          res.status(200).json(data).end();
+        } else {
+          res.status(401).json(data).end();
+        }
+      },
+      (err) => {
+        console.log(err);
+      }
+    );
+  }
+);
 
 module.exports = router;
