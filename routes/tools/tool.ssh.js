@@ -13,7 +13,7 @@ function ssh(host, user, password, cmd, callback) {
   //if the command starts with sudo enable pseudo-tty
   let cmdString = cmd.toLowerCase().split(' ');
   let isPseudoTTY = cmdString[0] === 'sudo';
-  //create empt response object - this is used to gather output and returned
+  //create empty response object - this is used to gather output and returned
   let output = {};
   ssh_options
     .exec(cmd, {

@@ -40,6 +40,7 @@ app.use('/api-spec', require('./routes/api/apispec'));
 //add the index page static route
 app.use(express.static(path.join(__dirname, 'svelte', 'public')));
 /* app.get('*', (req, res) => {
+
   res.sendFile(path.join(__dirname, 'svelte', 'public', 'index.html'));
 }); */
 
